@@ -26,17 +26,17 @@ MAKE			= make
 # vsim configuration
 VVERSION                = "10.7b"
 
-VLIB			= vlib-$(VVERSION)
+VLIB			= vlib
 VWORK			= work
 
-VLOG			= vlog-$(VVERSION)
+VLOG			= vlog
 VLOG_FLAGS		= -pedanticerrors -suppress 2577 -suppress 2583 -define CV32E40P_TRACE_EXECUTION
 VLOG_LOG                = vloggy
 
-VOPT			= vopt-$(VVERSION)
+VOPT			= vopt
 VOPT_FLAGS		= -debugdb -fsmdebug -pedanticerrors +acc #=mnprft
 
-VSIM			= vsim-$(VVERSION)
+VSIM			= vsim
 VSIM_HOME               = /usr/pack/modelsim-$(VVERSION)-kgf/questasim
 VSIM_FLAGS              =  # user defined
 ALL_VSIM_FLAGS		= $(VSIM_FLAGS)
@@ -215,17 +215,31 @@ custom/hello_world.elf: custom/hello_world.c
 		-I mem_stall \
 		-L $(RISCV)/riscv32-unknown-elf/lib \
 		-lc -lm -lgcc
+
+custom/aes_test.elf: custom/aes_test.c custom/aes.c custom/aes.h custom/support.h
+	$(RISCV_EXE_PREFIX)gcc -march=rv32imc -o $@ -w -Os -g -nostdlib \
+		$(CUSTOM_GCC_FLAGS) \
+		-T custom/link.ld \
+		-static \
+		custom/crt0.S \
+		$^ mem_stall/mem_stall.c custom/syscalls.c custom/vectors.S \
+		-I $(RISCV)/riscv32-unknown-elf/include \
+		-I mem_stall \
+		-L $(RISCV)/riscv32-unknown-elf/lib \
+		-lc -lm -lgcc
+
 custom-clean:
 	rm -rf custom/hello_world.elf custom/hello_world.hex
+	rm -rf custom/aes.elf custom/aes.hex
 
 .PHONY: custom-vsim-run
-custom-vsim-run: vsim-all custom/hello_world.hex
-custom-vsim-run: ALL_VSIM_FLAGS += "+firmware=custom/hello_world.hex"
+custom-vsim-run: vsim-all custom/aes_test.hex
+custom-vsim-run: ALL_VSIM_FLAGS += "+firmware=custom/aes_test.hex"
 custom-vsim-run: vsim-run
 
 .PHONY: custom-vsim-run-gui
-custom-vsim-run-gui: vsim-all custom/hello_world.hex
-custom-vsim-run-gui: ALL_VSIM_FLAGS += "+firmware=custom/hello_world.hex"
+custom-vsim-run-gui: vsim-all custom/aes_test.hex
+custom-vsim-run-gui: ALL_VSIM_FLAGS += "+firmware=custom/aes_test.hex"
 custom-vsim-run-gui: vsim-run-gui
 
 # Running custom fp programs:
